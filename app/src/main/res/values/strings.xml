@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">村帮帮</string>
+    <string name="hint_name">请输入姓名</string>
+    <string name="role_seeker">求助者</string>
+    <string name="role_helper">帮助者</string>
+    <string name="btn_enter">进入村帮帮</string>
+    <string name="btn_logout">退出登录</string>
+    <string name="tv_hold_to_speak">按住说话</string>
+    <string name="tv_release_to_send">松开发送求助</string>
+</resources>
