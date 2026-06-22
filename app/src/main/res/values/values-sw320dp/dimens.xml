@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 小屏设备缩小文字 -->
+    <dimen name="text_title">28sp</dimen>
+    <dimen name="text_greeting">18sp</dimen>
+    <dimen name="text_body">14sp</dimen>
+    <dimen name="text_small">12sp</dimen>
+    <dimen name="text_hint">14sp</dimen>
+    <dimen name="text_button">16sp</dimen>
+
+    <!-- 小屏设备缩小按钮 -->
+    <dimen name="record_btn_size">150dp</dimen>
+    <dimen name="enter_btn_height">48dp</dimen>
+    <dimen name="logout_btn_height">40dp</dimen>
+
+    <!-- 小屏设备缩小间距 -->
+    <dimen name="padding_large">24dp</dimen>
+    <dimen name="padding_medium">16dp</dimen>
+    <dimen name="padding_normal">12dp</dimen>
+    <dimen name="padding_small">8dp</dimen>
+    <dimen name="padding_tiny">4dp</dimen>
+
+    <!-- 小屏设备缩小图标 -->
+    <dimen name="icon_size">60dp</dimen>
+</resources>

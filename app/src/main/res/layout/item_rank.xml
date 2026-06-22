@@ -3,15 +3,15 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
-    android:padding="12dp"
-    android:layout_marginBottom="4dp"
+    android:padding="@dimen/padding_small"
+    android:layout_marginBottom="@dimen/padding_tiny"
     android:background="#FFFFFF">
 
     <TextView
         android:id="@+id/tv_rank_number"
         android:layout_width="40dp"
         android:layout_height="wrap_content"
-        android:textSize="16sp"
+        android:textSize="@dimen/text_body"
         android:textColor="#666666" />
 
     <TextView
@@ -19,12 +19,12 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:textSize="16sp" />
+        android:textSize="@dimen/text_body" />
 
     <TextView
         android:id="@+id/tv_rank_points"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="16sp"
+        android:textSize="@dimen/text_body"
         android:textColor="#FF8C42" />
 </LinearLayout>

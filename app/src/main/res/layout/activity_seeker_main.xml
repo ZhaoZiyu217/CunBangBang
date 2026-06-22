@@ -1,58 +1,79 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="24dp"
+    android:padding="@dimen/padding_medium"
     android:background="#FFFFFF">
 
+    <!-- 顶部问候语 -->
     <TextView
         android:id="@+id/tv_greeting"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:textSize="20sp"
+        android:text="你好，用户"
+        android:textSize="@dimen/text_greeting"
         android:textColor="#333333"
-        android:layout_marginTop="20dp"
-        android:layout_marginBottom="60dp"
-        android:text="你好，用户" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="@dimen/padding_small" />
 
-    <FrameLayout
-        android:layout_width="match_parent"
+    <!-- 圆形录音按钮：使用百分比宽高 -->
+    <View
+        android:id="@+id/btn_record"
+        android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:gravity="center">
+        android:background="@drawable/bg_circle_orange"
+        app:layout_constraintTop_toBottomOf="@id/tv_greeting"
+        app:layout_constraintBottom_toTopOf="@id/tv_hint"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintWidth_percent="0.45"
+        app:layout_constraintHeight_percent="0.35"
+        android:layout_marginTop="@dimen/padding_medium"
+        android:layout_marginBottom="@dimen/padding_medium" />
 
-        <View
-            android:id="@+id/btn_record"
-            android:layout_width="200dp"
-            android:layout_height="200dp"
-            android:background="@drawable/bg_circle_orange" />
+    <!-- 按钮上的文字 -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/tv_hold_to_speak"
+        android:textColor="#FFFFFF"
+        android:textSize="@dimen/text_body"
+        android:textStyle="bold"
+        app:layout_constraintTop_toTopOf="@id/btn_record"
+        app:layout_constraintBottom_toBottomOf="@id/btn_record"
+        app:layout_constraintStart_toStartOf="@id/btn_record"
+        app:layout_constraintEnd_toEndOf="@id/btn_record" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/tv_hold_to_speak"
-            android:textColor="#FFFFFF"
-            android:textSize="18sp"
-            android:textStyle="bold" />
-    </FrameLayout>
-
+    <!-- 提示文字 -->
     <TextView
         android:id="@+id/tv_hint"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="@string/tv_release_to_send"
-        android:textSize="16sp"
+        android:textSize="@dimen/text_hint"
         android:textColor="#666666"
         android:gravity="center"
-        android:layout_marginTop="20dp"
-        android:layout_marginBottom="30dp" />
+        app:layout_constraintBottom_toTopOf="@id/btn_logout"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="@dimen/padding_small" />
 
+    <!-- 退出登录按钮 -->
     <Button
         android:id="@+id/btn_logout"
-        android:layout_width="match_parent"
-        android:layout_height="48dp"
+        android:layout_width="0dp"
+        android:layout_height="@dimen/logout_btn_height"
         android:text="@string/btn_logout"
+        android:textSize="@dimen/text_body"
         android:textColor="#FF8C42"
-        android:background="@android:drawable/editbox_background" />
-</LinearLayout>
+        android:background="@android:drawable/editbox_background"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="@dimen/padding_small" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
