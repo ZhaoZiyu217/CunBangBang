@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.cunbangbang.R;
+import com.example.cunbangbang.activity.HelperMainActivity;
 import com.example.cunbangbang.adapter.AudioListAdapter;
 import com.example.cunbangbang.db.DBHelper;
 import com.example.cunbangbang.db.HelpRecordBean;
@@ -62,6 +63,14 @@ public class AudioListFragment extends Fragment {
     private void loadData() {
         List<HelpRecordBean> records = dbHelper.getAllHelpRecords();
         adapter = new AudioListAdapter(getContext(), records);
+
+        // ⭐ 设置监听：帮帮TA成功后，通知 Activity 刷新个人主页
+        adapter.setOnPointsUpdatedListener(() -> {
+            if (getActivity() instanceof HelperMainActivity) {
+                ((HelperMainActivity) getActivity()).refreshProfile();
+            }
+        });
+
         rvAudioList.setAdapter(adapter);
     }
 }

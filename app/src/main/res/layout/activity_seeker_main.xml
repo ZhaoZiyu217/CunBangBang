@@ -20,7 +20,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="@dimen/padding_small" />
 
-    <!-- 圆形录音按钮：使用百分比宽高 -->
+    <!-- 圆形录音按钮：宽度 = 高度（正方形） -->
     <View
         android:id="@+id/btn_record"
         android:layout_width="0dp"
@@ -30,10 +30,10 @@
         app:layout_constraintBottom_toTopOf="@id/tv_hint"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintWidth_percent="0.45"
-        app:layout_constraintHeight_percent="0.35"
         android:layout_marginTop="@dimen/padding_medium"
-        android:layout_marginBottom="@dimen/padding_medium" />
+        android:layout_marginBottom="@dimen/padding_medium"
+        app:layout_constraintWidth_percent="0.55"
+        app:layout_constraintDimensionRatio="1:1" />
 
     <!-- 按钮上的文字 -->
     <TextView

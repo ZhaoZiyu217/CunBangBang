@@ -1,5 +1,6 @@
 package com.example.cunbangbang.activity;
 
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -35,6 +36,17 @@ public class LoginRegisterActivity extends AppCompatActivity {
         // 请求权限
         PermissionUtil.checkAndRequestPermissions(this);
 
+        // 检查是否已登录
+        SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
+        int userId = prefs.getInt("user_id", -1);
+        if (userId != -1) {
+            UserBean savedUser = dbHelper.getUserById(userId);
+            if (savedUser != null) {
+                navigateToMain(savedUser);
+                return;
+            }
+        }
+
         etName = findViewById(R.id.et_name);
         spinnerVillage = findViewById(R.id.spinner_village);
         rgRole = findViewById(R.id.rg_role);
@@ -68,8 +80,8 @@ public class LoginRegisterActivity extends AppCompatActivity {
             // 检查用户是否已存在
             UserBean existingUser = dbHelper.getUserByNameAndVillage(name, village);
             if (existingUser != null) {
-                // 直接登录
                 Toast.makeText(this, "欢迎回来，" + name, Toast.LENGTH_SHORT).show();
+                saveLoginState(existingUser);
                 navigateToMain(existingUser);
                 return;
             }
@@ -79,11 +91,24 @@ public class LoginRegisterActivity extends AppCompatActivity {
             if (id != -1) {
                 UserBean newUser = dbHelper.getUserByNameAndVillage(name, village);
                 Toast.makeText(this, "注册成功，欢迎 " + name, Toast.LENGTH_SHORT).show();
+                saveLoginState(newUser);
                 navigateToMain(newUser);
             } else {
                 Toast.makeText(this, "注册失败，请重试", Toast.LENGTH_SHORT).show();
             }
         });
+    }
+
+    // 保存登录状态
+    private void saveLoginState(UserBean user) {
+        SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putInt("user_id", user.getId());
+        editor.putString("user_name", user.getName());
+        editor.putString("user_village", user.getVillage());
+        editor.putString("user_role", user.getRole());
+        editor.putInt("user_points", user.getPoints());
+        editor.apply();
     }
 
     private void navigateToMain(UserBean user) {

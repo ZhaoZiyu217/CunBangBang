@@ -1,29 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- 文字大小 -->
-    <dimen name="text_title">32sp</dimen>
-    <dimen name="text_greeting">20sp</dimen>
-    <dimen name="text_body">16sp</dimen>
-    <dimen name="text_small">14sp</dimen>
-    <dimen name="text_hint">16sp</dimen>
-    <dimen name="text_button">18sp</dimen>
+    <!-- 文字大小（调大） -->
+    <dimen name="text_title">36sp</dimen>      <!-- 标题 -->
+    <dimen name="text_greeting">24sp</dimen>   <!-- 问候语 -->
+    <dimen name="text_body">20sp</dimen>       <!-- 正文 -->
+    <dimen name="text_small">16sp</dimen>      <!-- 小字 -->
+    <dimen name="text_hint">18sp</dimen>       <!-- 提示 -->
+    <dimen name="text_button">22sp</dimen>     <!-- 按钮 -->
 
-    <!-- 按钮尺寸 -->
-    <dimen name="record_btn_size">200dp</dimen>
-    <dimen name="enter_btn_height">56dp</dimen>
-    <dimen name="logout_btn_height">48dp</dimen>
+    <!-- 按钮尺寸（调大） -->
+    <dimen name="record_btn_size">220dp</dimen>
+    <dimen name="enter_btn_height">64dp</dimen>
+    <dimen name="logout_btn_height">56dp</dimen>
 
-    <!-- 间距 -->
-    <dimen name="padding_large">32dp</dimen>
-    <dimen name="padding_medium">24dp</dimen>
-    <dimen name="padding_normal">16dp</dimen>
-    <dimen name="padding_small">12dp</dimen>
+    <!-- 间距（适当调大） -->
+    <dimen name="padding_large">36dp</dimen>
+    <dimen name="padding_medium">28dp</dimen>
+    <dimen name="padding_normal">20dp</dimen>
+    <dimen name="padding_small">14dp</dimen>
     <dimen name="padding_tiny">8dp</dimen>
 
     <!-- 图标大小 -->
-    <dimen name="icon_size">80dp</dimen>
-
-    <!-- 圆角 -->
-    <dimen name="corner_radius">25dp</dimen>
-    <dimen name="corner_radius_circle">200dp</dimen>
+    <dimen name="icon_size">100dp</dimen>
 </resources>

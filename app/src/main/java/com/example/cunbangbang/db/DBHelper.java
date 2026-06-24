@@ -5,6 +5,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.util.Log;
 
 import com.example.cunbangbang.AppConstant;
 
@@ -97,7 +98,8 @@ public class DBHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(AppConstant.COL_POINTS, newPoints);
-        db.update(AppConstant.USER_TABLE, values, AppConstant.COL_ID + "=?", new String[]{String.valueOf(userId)});
+        int rows = db.update(AppConstant.USER_TABLE, values, AppConstant.COL_ID + "=?", new String[]{String.valueOf(userId)});
+        Log.d("DBHelper", "更新积分: userId=" + userId + ", newPoints=" + newPoints + ", 影响行数=" + rows);
     }
 
     public List<UserBean> getHelpersByVillage(String village) {

@@ -2,6 +2,7 @@ package com.example.cunbangbang.adapter;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -25,11 +26,23 @@ import java.util.List;
 
 public class AudioListAdapter extends RecyclerView.Adapter<AudioListAdapter.ViewHolder> {
 
+    private static final String TAG = "AudioListAdapter";
     private Context context;
     private List<HelpRecordBean> records;
     private DBHelper dbHelper;
     private AudioUtil audioUtil;
     private int playingPosition = -1;
+
+    // 接口：通知积分更新
+    private OnPointsUpdatedListener onPointsUpdatedListener;
+
+    public interface OnPointsUpdatedListener {
+        void onPointsUpdated();
+    }
+
+    public void setOnPointsUpdatedListener(OnPointsUpdatedListener listener) {
+        this.onPointsUpdatedListener = listener;
+    }
 
     public AudioListAdapter(Context context, List<HelpRecordBean> records) {
         this.context = context;
@@ -68,6 +81,7 @@ public class AudioListAdapter extends RecyclerView.Adapter<AudioListAdapter.View
             public void onClick(View v) {
                 File audioDir = FileUtil.getAudioDir(context);
                 File audioFile = new File(audioDir, record.getFileName());
+
                 if (!audioFile.exists()) {
                     Toast.makeText(context, "音频文件不存在", Toast.LENGTH_SHORT).show();
                     return;
@@ -105,26 +119,50 @@ public class AudioListAdapter extends RecyclerView.Adapter<AudioListAdapter.View
         holder.btnHelp.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                Log.d(TAG, "========== 帮帮TA 点击 ==========");
+                Log.d(TAG, "状态: " + record.getStatus());
+
                 if (AppConstant.STATUS_PENDING.equals(record.getStatus())) {
+                    Log.d(TAG, "状态为待帮助，开始处理");
+
                     // 更新状态为已帮助
                     dbHelper.updateHelpRecordStatus(record.getId(), AppConstant.STATUS_HELPED);
+                    Log.d(TAG, "记录状态已更新为: 已帮助");
 
                     // 给帮助者积分 +10
-                    UserBean helper = dbHelper.getUserByNameAndVillage(
-                            FileUtil.extractNameFromFileName(record.getFileName()),
-                            record.getHelperVillage()
-                    );
+                    String helperName = FileUtil.extractNameFromFileName(record.getFileName());
+                    Log.d(TAG, "帮助者姓名: " + helperName);
+                    Log.d(TAG, "村落: " + record.getHelperVillage());
+
+                    UserBean helper = dbHelper.getUserByNameAndVillage(helperName, record.getHelperVillage());
+
                     if (helper != null) {
-                        dbHelper.updateUserPoints(helper.getId(), helper.getPoints() + 10);
+                        Log.d(TAG, "找到用户: " + helper.getName() + ", 当前积分: " + helper.getPoints());
+                        int oldPoints = helper.getPoints();
+                        int newPoints = oldPoints + 10;
+                        dbHelper.updateUserPoints(helper.getId(), newPoints);
+                        Log.d(TAG, "积分更新: " + oldPoints + " -> " + newPoints);
+                        Toast.makeText(context, "已帮助 " + helperName + "，积分 +10", Toast.LENGTH_SHORT).show();
+
+                        // ⭐ 通知积分已更新
+                        if (onPointsUpdatedListener != null) {
+                            Log.d(TAG, "通知监听器: 积分已更新");
+                            onPointsUpdatedListener.onPointsUpdated();
+                        } else {
+                            Log.e(TAG, "监听器为空！");
+                        }
+                    } else {
+                        Log.e(TAG, "未找到帮助者用户！");
+                        Toast.makeText(context, "未找到用户信息", Toast.LENGTH_SHORT).show();
                     }
 
-                    Toast.makeText(context, "已帮助 " + FileUtil.extractNameFromFileName(record.getFileName()), Toast.LENGTH_SHORT).show();
                     record.setStatus(AppConstant.STATUS_HELPED);
                     notifyItemChanged(position);
+                } else {
+                    Log.d(TAG, "状态不是待帮助: " + record.getStatus());
                 }
             }
         });
-
         // 更新播放按钮文字
         if (playingPosition == position && audioUtil.isPlaying()) {
             holder.btnPlay.setText("播放中");
