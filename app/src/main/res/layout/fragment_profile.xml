@@ -1,52 +1,68 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:padding="@dimen/padding_normal">
 
-    <TextView
-        android:id="@+id/tv_profile_name"
+    <!-- 用户信息区域 -->
+    <LinearLayout
+        android:id="@+id/layout_user_info"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="@dimen/text_body"
-        android:layout_marginBottom="@dimen/padding_tiny" />
+        android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/tv_profile_village"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="@dimen/text_small"
-        android:textColor="#666666"
-        android:layout_marginBottom="@dimen/padding_normal" />
+        <TextView
+            android:id="@+id/tv_profile_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/text_body"
+            android:layout_marginBottom="@dimen/padding_tiny" />
 
-    <TextView
-        android:id="@+id/tv_profile_points"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textSize="@dimen/text_body"
-        android:layout_marginBottom="@dimen/padding_medium" />
+        <TextView
+            android:id="@+id/tv_profile_village"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/text_small"
+            android:textColor="#666666"
+            android:layout_marginBottom="@dimen/padding_normal" />
 
+        <TextView
+            android:id="@+id/tv_profile_points"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="@dimen/text_body"
+            android:layout_marginBottom="@dimen/padding_medium" />
+    </LinearLayout>
+
+    <!-- 排行榜标题 -->
     <TextView
+        android:id="@+id/tv_rank_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="同村排行榜"
         android:textSize="@dimen/text_greeting"
         android:textStyle="bold"
-        android:layout_marginBottom="@dimen/padding_small" />
+        android:layout_below="@id/layout_user_info" />
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rv_rank"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
-    <!-- 退出登录按钮 -->
+    <!-- 退出登录按钮：固定底部 -->
     <Button
         android:id="@+id/btn_profile_logout"
         android:layout_width="match_parent"
         android:layout_height="@dimen/logout_btn_height"
-        android:text="@string/btn_logout"
+        android:text="退出登录"
         android:textSize="@dimen/text_body"
         android:textColor="#FF8C42"
         android:background="@android:drawable/editbox_background"
-        android:layout_marginTop="@dimen/padding_normal" />
-</LinearLayout>
+        android:layout_alignParentBottom="true" />
+
+    <!-- 排行榜列表：填满中间剩余空间 -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_rank"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_above="@id/btn_profile_logout"
+        android:layout_below="@id/tv_rank_title"
+        android:layout_marginTop="@dimen/padding_small"
+        android:layout_marginBottom="@dimen/padding_small" />
+
+</RelativeLayout>

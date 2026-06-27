@@ -82,12 +82,20 @@ public class HelperMainActivity extends AppCompatActivity {
         });
     }
 
+
     /**
      * 刷新个人主页数据
      */
     public void refreshProfile() {
         Log.d(TAG, "refreshProfile: 刷新个人主页");
 
+        // 重新查询最新数据
+        DBHelper dbHelper = new DBHelper(this);
+        UserBean latestUser = dbHelper.getUserById(currentUser.getId());
+        if (latestUser != null) {
+            currentUser = latestUser;
+            Log.d(TAG, "refreshProfile: 最新积分 = " + currentUser.getPoints());
+        }
         // 直接重新创建 ProfileFragment 并替换
         ProfileFragment newProfile = ProfileFragment.newInstance(currentUser);
         getSupportFragmentManager().beginTransaction()
@@ -96,8 +104,7 @@ public class HelperMainActivity extends AppCompatActivity {
 
         profileFragment = newProfile;
 
-        // 切换底部导航到个人主页
-        bottomNav.setSelectedItemId(R.id.nav_profile);
+
     }
 
     public void clearLoginState() {

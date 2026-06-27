@@ -48,7 +48,7 @@ public class ProfileFragment extends Fragment {
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        Log.d(TAG, "onCreateView: 创建新视图");
+        Log.d(TAG, "onCreateView");
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
 
         tvName = view.findViewById(R.id.tv_profile_name);
@@ -77,14 +77,21 @@ public class ProfileFragment extends Fragment {
         loadData();
     }
 
+    /**
+     * 公开方法：刷新积分和排行榜
+     */
     public void refreshData() {
         Log.d(TAG, "refreshData: 强制刷新");
         loadData();
     }
 
+    /**
+     * 加载数据
+     */
     private void loadData() {
-        Log.d(TAG, "loadData: 从数据库重新读取用户信息");
+        Log.d(TAG, "loadData: 从数据库读取最新数据");
 
+        // 重新查询用户
         UserBean updatedUser = dbHelper.getUserById(currentUser.getId());
         if (updatedUser != null) {
             currentUser = updatedUser;
@@ -93,16 +100,14 @@ public class ProfileFragment extends Fragment {
             Log.e(TAG, "无法获取用户信息");
         }
 
-        String nameText = "姓名：" + currentUser.getName();
-        String villageText = "村落：" + currentUser.getVillage();
-        String pointsText = "当前积分：" + currentUser.getPoints();
+        // ✅ 强制更新 UI
+        tvName.setText("姓名：" + currentUser.getName());
+        tvVillage.setText("村落：" + currentUser.getVillage());
+        tvPoints.setText("当前积分：" + currentUser.getPoints());
 
-        Log.d(TAG, "设置文本: " + pointsText);
+        Log.d(TAG, "更新UI: 姓名=" + currentUser.getName() + ", 积分=" + currentUser.getPoints());
 
-        tvName.setText(nameText);
-        tvVillage.setText(villageText);
-        tvPoints.setText(pointsText);
-
+        // 刷新排行榜
         List<UserBean> rankList = dbHelper.getHelpersByVillage(currentUser.getVillage());
         Log.d(TAG, "排行榜人数: " + rankList.size());
         RankAdapter adapter = new RankAdapter(rankList);

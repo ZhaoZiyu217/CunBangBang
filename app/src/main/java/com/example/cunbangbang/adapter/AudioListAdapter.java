@@ -2,6 +2,7 @@ package com.example.cunbangbang.adapter;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -66,7 +67,6 @@ public class AudioListAdapter extends RecyclerView.Adapter<AudioListAdapter.View
         holder.tvName.setText(name);
         holder.tvStatus.setText(record.getStatus());
 
-        // 如果已帮助，禁用帮帮TA按钮
         if (AppConstant.STATUS_HELPED.equals(record.getStatus())) {
             holder.btnHelp.setEnabled(false);
             holder.btnHelp.setText("已帮助");
@@ -87,7 +87,6 @@ public class AudioListAdapter extends RecyclerView.Adapter<AudioListAdapter.View
                     return;
                 }
 
-                // 停止之前的播放
                 if (audioUtil.isPlaying()) {
                     audioUtil.stopPlayback();
                     if (playingPosition != -1) {
@@ -119,56 +118,58 @@ public class AudioListAdapter extends RecyclerView.Adapter<AudioListAdapter.View
         holder.btnHelp.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Log.d(TAG, "========== 帮帮TA 点击 ==========");
-                Log.d(TAG, "状态: " + record.getStatus());
-
                 if (AppConstant.STATUS_PENDING.equals(record.getStatus())) {
-                    Log.d(TAG, "状态为待帮助，开始处理");
+                    Log.d(TAG, "========== 帮帮TA ==========");
 
-                    // 更新状态为已帮助
                     dbHelper.updateHelpRecordStatus(record.getId(), AppConstant.STATUS_HELPED);
                     Log.d(TAG, "记录状态已更新为: 已帮助");
 
-                    // 给帮助者积分 +10
-                    String helperName = FileUtil.extractNameFromFileName(record.getFileName());
-                    Log.d(TAG, "帮助者姓名: " + helperName);
-                    Log.d(TAG, "村落: " + record.getHelperVillage());
+                    // ⭐ 给当前登录的帮助者加分
+                    String currentHelperName = getCurrentHelperName();
+                    String currentHelperVillage = getCurrentHelperVillage();
 
-                    UserBean helper = dbHelper.getUserByNameAndVillage(helperName, record.getHelperVillage());
+                    Log.d(TAG, "当前帮助者: " + currentHelperName + ", " + currentHelperVillage);
+
+                    UserBean helper = dbHelper.getUserByNameAndVillage(currentHelperName, currentHelperVillage);
 
                     if (helper != null) {
-                        Log.d(TAG, "找到用户: " + helper.getName() + ", 当前积分: " + helper.getPoints());
                         int oldPoints = helper.getPoints();
                         int newPoints = oldPoints + 10;
                         dbHelper.updateUserPoints(helper.getId(), newPoints);
                         Log.d(TAG, "积分更新: " + oldPoints + " -> " + newPoints);
-                        Toast.makeText(context, "已帮助 " + helperName + "，积分 +10", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(context, "已帮助 " + FileUtil.extractNameFromFileName(record.getFileName()) + "，积分 +10", Toast.LENGTH_SHORT).show();
 
-                        // ⭐ 通知积分已更新
                         if (onPointsUpdatedListener != null) {
-                            Log.d(TAG, "通知监听器: 积分已更新");
                             onPointsUpdatedListener.onPointsUpdated();
-                        } else {
-                            Log.e(TAG, "监听器为空！");
                         }
                     } else {
-                        Log.e(TAG, "未找到帮助者用户！");
+                        Log.e(TAG, "未找到当前帮助者用户！");
                         Toast.makeText(context, "未找到用户信息", Toast.LENGTH_SHORT).show();
                     }
 
                     record.setStatus(AppConstant.STATUS_HELPED);
                     notifyItemChanged(position);
-                } else {
-                    Log.d(TAG, "状态不是待帮助: " + record.getStatus());
                 }
             }
         });
-        // 更新播放按钮文字
+
         if (playingPosition == position && audioUtil.isPlaying()) {
             holder.btnPlay.setText("播放中");
         } else {
             holder.btnPlay.setText("播放");
         }
+    }
+
+    // 获取当前登录的帮助者姓名
+    private String getCurrentHelperName() {
+        SharedPreferences prefs = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE);
+        return prefs.getString("user_name", "");
+    }
+
+    // 获取当前登录的帮助者村落
+    private String getCurrentHelperVillage() {
+        SharedPreferences prefs = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE);
+        return prefs.getString("user_village", "");
     }
 
     @Override
