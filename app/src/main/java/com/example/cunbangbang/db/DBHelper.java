@@ -157,10 +157,36 @@ public class DBHelper extends SQLiteOpenHelper {
         return list;
     }
 
+    // 按村落获取求助记录
+    public List<HelpRecordBean> getHelpRecordsByVillage(String village) {
+        List<HelpRecordBean> list = new ArrayList<>();
+        SQLiteDatabase db = getReadableDatabase();
+        Cursor cursor = db.query(AppConstant.HELP_TABLE, null,
+                AppConstant.COL_HELPER_VILLAGE + "=?",
+                new String[]{village},
+                null, null, AppConstant.COL_TIMESTAMP + " DESC");
+        if (cursor != null) {
+            while (cursor.moveToNext()) {
+                HelpRecordBean record = new HelpRecordBean();
+                record.setId(cursor.getInt(cursor.getColumnIndexOrThrow(AppConstant.COL_ID)));
+                record.setHelperName(cursor.getString(cursor.getColumnIndexOrThrow(AppConstant.COL_HELPER_NAME)));
+                record.setHelperVillage(cursor.getString(cursor.getColumnIndexOrThrow(AppConstant.COL_HELPER_VILLAGE)));
+                record.setTimestamp(cursor.getLong(cursor.getColumnIndexOrThrow(AppConstant.COL_TIMESTAMP)));
+                record.setFileName(cursor.getString(cursor.getColumnIndexOrThrow(AppConstant.COL_FILE_NAME)));
+                record.setStatus(cursor.getString(cursor.getColumnIndexOrThrow(AppConstant.COL_STATUS)));
+                list.add(record);
+            }
+            cursor.close();
+        }
+        return list;
+    }
+
     public void updateHelpRecordStatus(int id, String newStatus) {
         SQLiteDatabase db = getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put(AppConstant.COL_STATUS, newStatus);
         db.update(AppConstant.HELP_TABLE, values, AppConstant.COL_ID + "=?", new String[]{String.valueOf(id)});
     }
+
+
 }

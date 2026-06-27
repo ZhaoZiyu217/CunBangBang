@@ -61,10 +61,10 @@ public class AudioListFragment extends Fragment {
     }
 
     private void loadData() {
-        List<HelpRecordBean> records = dbHelper.getAllHelpRecords();
+        // ⭐ 只查询当前用户所在村落的求助记录
+        List<HelpRecordBean> records = dbHelper.getHelpRecordsByVillage(currentUser.getVillage());
         adapter = new AudioListAdapter(getContext(), records);
 
-        // ⭐ 设置监听：帮帮TA成功后，通知 Activity 刷新个人主页
         adapter.setOnPointsUpdatedListener(() -> {
             if (getActivity() instanceof HelperMainActivity) {
                 ((HelperMainActivity) getActivity()).refreshProfile();
