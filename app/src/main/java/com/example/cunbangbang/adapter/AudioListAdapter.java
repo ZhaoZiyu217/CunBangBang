@@ -18,12 +18,16 @@ import com.example.cunbangbang.AppConstant;
 import com.example.cunbangbang.R;
 import com.example.cunbangbang.db.DBHelper;
 import com.example.cunbangbang.db.HelpRecordBean;
-import com.example.cunbangbang.db.UserBean;
 import com.example.cunbangbang.util.AudioUtil;
+import com.example.cunbangbang.util.CloudManager;
 import com.example.cunbangbang.util.FileUtil;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class AudioListAdapter extends RecyclerView.Adapter<AudioListAdapter.ViewHolder> {
 
@@ -34,7 +38,6 @@ public class AudioListAdapter extends RecyclerView.Adapter<AudioListAdapter.View
     private AudioUtil audioUtil;
     private int playingPosition = -1;
 
-    // 接口：通知积分更新
     private OnPointsUpdatedListener onPointsUpdatedListener;
 
     public interface OnPointsUpdatedListener {
@@ -75,76 +78,184 @@ public class AudioListAdapter extends RecyclerView.Adapter<AudioListAdapter.View
             holder.btnHelp.setText("帮帮TA");
         }
 
-        // 播放按钮
+        // ==================== 播放按钮 ====================
         holder.btnPlay.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                File audioDir = FileUtil.getAudioDir(context);
-                File audioFile = new File(audioDir, record.getFileName());
+                String fileUrl = record.getFileUrl();
 
-                if (!audioFile.exists()) {
-                    Toast.makeText(context, "音频文件不存在", Toast.LENGTH_SHORT).show();
-                    return;
+                if (fileUrl != null && !fileUrl.isEmpty()) {
+                    Log.d(TAG, "播放云端文件: " + fileUrl);
+
+                    if (fileUrl.startsWith("cloud://")) {
+                        // ⭐ 先获取真实 URL
+                        CloudManager.getInstance().getDownloadUrl(fileUrl, new CloudManager.CloudCallback<String>() {
+                            @Override
+                            public void onSuccess(String realUrl) {
+                                Log.d(TAG, "获取真实URL成功: " + realUrl);
+                                // ⭐ 主线程播放
+                                if (context instanceof android.app.Activity) {
+                                    ((android.app.Activity) context).runOnUiThread(() -> {
+                                        playAudio(realUrl, holder);
+                                    });
+                                }
+                            }
+
+                            @Override
+                            public void onFailure(String error) {
+                                Log.e(TAG, "获取真实URL失败: " + error);
+                                if (context instanceof android.app.Activity) {
+                                    ((android.app.Activity) context).runOnUiThread(() -> {
+                                        Toast.makeText(context, "获取播放地址失败: " + error, Toast.LENGTH_SHORT).show();
+                                    });
+                                }
+                            }
+                        });
+                    } else {
+                        // 直接播放
+                        playAudio(fileUrl, holder);
+                    }
+
+                } else {
+                    Log.d(TAG, "没有云端URL，尝试本地播放");
+                    playLocalAudio(record, holder);
                 }
-
-                if (audioUtil.isPlaying()) {
-                    audioUtil.stopPlayback();
-                    if (playingPosition != -1) {
-                        notifyItemChanged(playingPosition);
-                    }
-                }
-
-                audioUtil.playAudio(audioFile.getAbsolutePath(), new AudioUtil.PlaybackCallback() {
-                    @Override
-                    public void onPlaybackComplete() {
-                        if (playingPosition != -1) {
-                            int oldPos = playingPosition;
-                            playingPosition = -1;
-                            notifyItemChanged(oldPos);
-                        }
-                    }
-
-                    @Override
-                    public void onError(String error) {
-                        Toast.makeText(context, "播放失败: " + error, Toast.LENGTH_SHORT).show();
-                    }
-                });
-                playingPosition = position;
-                holder.btnPlay.setText("播放中");
             }
         });
 
-        // 帮帮TA按钮
+        // ==================== 帮帮TA ====================
         holder.btnHelp.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (AppConstant.STATUS_PENDING.equals(record.getStatus())) {
                     Log.d(TAG, "========== 帮帮TA ==========");
+                    Log.d(TAG, "求助者: " + FileUtil.extractNameFromFileName(record.getFileName()));
 
-                    dbHelper.updateHelpRecordStatus(record.getId(), AppConstant.STATUS_HELPED);
-                    Log.d(TAG, "记录状态已更新为: 已帮助");
-
-                    // ⭐ 给当前登录的帮助者加分
-                    String currentHelperName = getCurrentHelperName();
-                    String currentHelperVillage = getCurrentHelperVillage();
+                    SharedPreferences prefs = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE);
+                    String currentHelperName = prefs.getString("user_name", "");
+                    String currentHelperVillage = prefs.getString("user_village", "");
+                    String currentHelperId = prefs.getString("user_id", "");
+                    int currentPoints = prefs.getInt("user_points", 0);
 
                     Log.d(TAG, "当前帮助者: " + currentHelperName + ", " + currentHelperVillage);
+                    Log.d(TAG, "当前积分: " + currentPoints);
 
-                    UserBean helper = dbHelper.getUserByNameAndVillage(currentHelperName, currentHelperVillage);
+                    if (currentHelperName.isEmpty() || currentHelperVillage.isEmpty()) {
+                        Log.e(TAG, "未获取到当前帮助者信息");
+                        Toast.makeText(context, "请重新登录", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
 
-                    if (helper != null) {
-                        int oldPoints = helper.getPoints();
-                        int newPoints = oldPoints + 10;
-                        dbHelper.updateUserPoints(helper.getId(), newPoints);
-                        Log.d(TAG, "积分更新: " + oldPoints + " -> " + newPoints);
-                        Toast.makeText(context, "已帮助 " + FileUtil.extractNameFromFileName(record.getFileName()) + "，积分 +10", Toast.LENGTH_SHORT).show();
+                    // 1. 更新本地求助记录状态
+                    dbHelper.updateHelpRecordStatus(record.getId(), AppConstant.STATUS_HELPED);
+                    Log.d(TAG, "本地记录状态已更新");
 
-                        if (onPointsUpdatedListener != null) {
-                            onPointsUpdatedListener.onPointsUpdated();
+                    // 2. 更新云端求助记录状态
+                    Map<String, Object> updateData = new HashMap<>();
+                    updateData.put("status", AppConstant.STATUS_HELPED);
+                    Map<String, Object> where = new HashMap<>();
+                    where.put("fileName", record.getFileName());
+
+                    CloudManager.getInstance().query("help_records", where, new CloudManager.CloudCallback<JsonObject>() {
+                        @Override
+                        public void onSuccess(JsonObject result) {
+                            try {
+                                if (result.has("data")) {
+                                    JsonObject data = result.getAsJsonObject("data");
+                                    if (data.has("data")) {
+                                        JsonArray recordsArray = data.getAsJsonArray("data");
+                                        if (recordsArray != null && recordsArray.size() > 0) {
+                                            JsonObject item = recordsArray.get(0).getAsJsonObject();
+                                            String docId = item.get("_id").getAsString();
+                                            CloudManager.getInstance().update("help_records", docId, updateData,
+                                                    new CloudManager.CloudCallback<JsonObject>() {
+                                                        @Override
+                                                        public void onSuccess(JsonObject result) {
+                                                            Log.d(TAG, "✅ 云端记录状态已更新");
+                                                        }
+                                                        @Override
+                                                        public void onFailure(String error) {
+                                                            Log.e(TAG, "❌ 云端记录状态更新失败: " + error);
+                                                        }
+                                                    });
+                                        }
+                                    }
+                                }
+                            } catch (Exception e) {
+                                Log.e(TAG, "解析更新结果失败", e);
+                            }
                         }
-                    } else {
-                        Log.e(TAG, "未找到当前帮助者用户！");
-                        Toast.makeText(context, "未找到用户信息", Toast.LENGTH_SHORT).show();
+
+                        @Override
+                        public void onFailure(String error) {
+                            Log.e(TAG, "查询云端记录失败: " + error);
+                        }
+                    });
+
+                    // 3. 积分 +10
+                    int newPoints = currentPoints + 10;
+                    Log.d(TAG, "积分更新: " + currentPoints + " -> " + newPoints);
+
+                    SharedPreferences.Editor editor = prefs.edit();
+                    editor.putInt("user_points", newPoints);
+                    editor.apply();
+
+                    if (!currentHelperId.isEmpty()) {
+                        dbHelper.updateUserPoints(currentHelperId, newPoints);
+                        Log.d(TAG, "本地 SQLite 积分已更新");
+                    }
+
+                    // 更新云端用户积分
+                    Map<String, Object> userWhere = new HashMap<>();
+                    userWhere.put("name", currentHelperName);
+                    userWhere.put("village", currentHelperVillage);
+
+                    CloudManager.getInstance().query("users", userWhere, new CloudManager.CloudCallback<JsonObject>() {
+                        @Override
+                        public void onSuccess(JsonObject result) {
+                            try {
+                                if (result.has("data")) {
+                                    JsonObject data = result.getAsJsonObject("data");
+                                    if (data.has("data")) {
+                                        JsonArray recordsArray = data.getAsJsonArray("data");
+                                        if (recordsArray != null && recordsArray.size() > 0) {
+                                            JsonObject item = recordsArray.get(0).getAsJsonObject();
+                                            String docId = item.get("_id").getAsString();
+                                            int oldPoints = item.get("points").getAsInt();
+                                            int newPointsCloud = oldPoints + 10;
+
+                                            Map<String, Object> pointUpdate = new HashMap<>();
+                                            pointUpdate.put("points", newPointsCloud);
+
+                                            CloudManager.getInstance().update("users", docId, pointUpdate,
+                                                    new CloudManager.CloudCallback<JsonObject>() {
+                                                        @Override
+                                                        public void onSuccess(JsonObject result) {
+                                                            Log.d(TAG, "✅ 云端积分已更新");
+                                                        }
+                                                        @Override
+                                                        public void onFailure(String error) {
+                                                            Log.e(TAG, "❌ 云端积分更新失败: " + error);
+                                                        }
+                                                    });
+                                        }
+                                    }
+                                }
+                            } catch (Exception e) {
+                                Log.e(TAG, "解析用户更新结果失败", e);
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(String error) {
+                            Log.e(TAG, "查询用户失败: " + error);
+                        }
+                    });
+
+                    Toast.makeText(context, "已帮助 " + FileUtil.extractNameFromFileName(record.getFileName()) + "，积分 +10！当前积分：" + newPoints, Toast.LENGTH_LONG).show();
+
+                    if (onPointsUpdatedListener != null) {
+                        onPointsUpdatedListener.onPointsUpdated();
                     }
 
                     record.setStatus(AppConstant.STATUS_HELPED);
@@ -160,16 +271,101 @@ public class AudioListAdapter extends RecyclerView.Adapter<AudioListAdapter.View
         }
     }
 
-    // 获取当前登录的帮助者姓名
-    private String getCurrentHelperName() {
-        SharedPreferences prefs = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE);
-        return prefs.getString("user_name", "");
+    /**
+     * 播放音频（云端 URL）- 必须在主线程调用
+     */
+    private void playAudio(String url, ViewHolder holder) {
+        if (audioUtil.isPlaying()) {
+            audioUtil.stopPlayback();
+            if (playingPosition != -1) {
+                notifyItemChanged(playingPosition);
+            }
+        }
+
+        playingPosition = holder.getAdapterPosition();
+        holder.btnPlay.setText("播放中");
+
+        audioUtil.playAudioUrl(url, new AudioUtil.PlaybackCallback() {
+            @Override
+            public void onPlaybackComplete() {
+                if (context instanceof android.app.Activity) {
+                    ((android.app.Activity) context).runOnUiThread(() -> {
+                        if (playingPosition != -1) {
+                            int oldPos = playingPosition;
+                            playingPosition = -1;
+                            notifyItemChanged(oldPos);
+                        }
+                    });
+                }
+            }
+
+            @Override
+            public void onError(String error) {
+                if (context instanceof android.app.Activity) {
+                    ((android.app.Activity) context).runOnUiThread(() -> {
+                        Log.e(TAG, "播放云端文件失败: " + error);
+                        Toast.makeText(context, "播放失败: " + error, Toast.LENGTH_SHORT).show();
+                        if (playingPosition != -1) {
+                            int oldPos = playingPosition;
+                            playingPosition = -1;
+                            notifyItemChanged(oldPos);
+                        }
+                    });
+                }
+            }
+        });
     }
 
-    // 获取当前登录的帮助者村落
-    private String getCurrentHelperVillage() {
-        SharedPreferences prefs = context.getSharedPreferences("user_prefs", Context.MODE_PRIVATE);
-        return prefs.getString("user_village", "");
+    /**
+     * 播放本地音频
+     */
+    private void playLocalAudio(HelpRecordBean record, ViewHolder holder) {
+        File audioDir = FileUtil.getAudioDir(context);
+        File audioFile = new File(audioDir, record.getFileName());
+
+        if (!audioFile.exists()) {
+            Toast.makeText(context, "音频文件不存在", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (audioUtil.isPlaying()) {
+            audioUtil.stopPlayback();
+            if (playingPosition != -1) {
+                notifyItemChanged(playingPosition);
+            }
+        }
+
+        playingPosition = holder.getAdapterPosition();
+        holder.btnPlay.setText("播放中");
+
+        audioUtil.playAudio(audioFile.getAbsolutePath(), new AudioUtil.PlaybackCallback() {
+            @Override
+            public void onPlaybackComplete() {
+                if (context instanceof android.app.Activity) {
+                    ((android.app.Activity) context).runOnUiThread(() -> {
+                        if (playingPosition != -1) {
+                            int oldPos = playingPosition;
+                            playingPosition = -1;
+                            notifyItemChanged(oldPos);
+                        }
+                    });
+                }
+            }
+
+            @Override
+            public void onError(String error) {
+                if (context instanceof android.app.Activity) {
+                    ((android.app.Activity) context).runOnUiThread(() -> {
+                        Toast.makeText(context, "播放失败: " + error, Toast.LENGTH_SHORT).show();
+                        if (playingPosition != -1) {
+                            int oldPos = playingPosition;
+                            playingPosition = -1;
+                            notifyItemChanged(oldPos);
+                        }
+                    });
+                }
+            }
+        });
     }
 
     @Override

@@ -3,7 +3,7 @@ package com.example.cunbangbang.db;
 import java.io.Serializable;
 
 public class UserBean implements Serializable {
-    private int id;
+    private String id;  // ⭐ 改为 String
     private String name;
     private String village;
     private String role;
@@ -11,7 +11,7 @@ public class UserBean implements Serializable {
 
     public UserBean() {}
 
-    public UserBean(int id, String name, String village, String role, int points) {
+    public UserBean(String id, String name, String village, String role, int points) {
         this.id = id;
         this.name = name;
         this.village = village;
@@ -19,8 +19,8 @@ public class UserBean implements Serializable {
         this.points = points;
     }
 
-    public int getId() { return id; }
-    public void setId(int id) { this.id = id; }
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
 
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
@@ -33,4 +33,15 @@ public class UserBean implements Serializable {
 
     public int getPoints() { return points; }
     public void setPoints(int points) { this.points = points; }
+
+    @Override
+    public String toString() {
+        return "UserBean{" +
+                "id='" + id + '\'' +
+                ", name='" + name + '\'' +
+                ", village='" + village + '\'' +
+                ", role='" + role + '\'' +
+                ", points=" + points +
+                '}';
+    }
 }

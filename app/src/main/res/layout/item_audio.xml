@@ -17,15 +17,16 @@
             android:id="@+id/tv_item_name"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="@dimen/text_body"
+            android:textSize="20sp"
+            android:textColor="#000000"
             android:textStyle="bold" />
 
         <TextView
             android:id="@+id/tv_item_status"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="@dimen/text_small"
-            android:textColor="#666666" />
+            android:textSize="16sp"
+            android:textColor="#444444" />
     </LinearLayout>
 
     <Button
@@ -33,9 +34,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="播放"
-        android:textSize="@dimen/text_small"
-        android:paddingLeft="@dimen/padding_small"
-        android:paddingRight="@dimen/padding_small"
+        android:textSize="16sp"
+        android:textColor="#000000"
         android:layout_marginEnd="@dimen/padding_tiny" />
 
     <Button
@@ -43,9 +43,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="帮帮TA"
-        android:textSize="@dimen/text_small"
-        android:paddingLeft="@dimen/padding_small"
-        android:paddingRight="@dimen/padding_small"
-        android:background="@drawable/bg_orange_round"
-        android:textColor="#FFFFFF" />
+        android:textSize="16sp"
+        android:textColor="#FFFFFF"
+        android:background="@drawable/bg_orange_round" />
+
 </LinearLayout>

@@ -55,16 +55,25 @@ public class AudioUtil {
             return;
         }
 
+        String filePath = currentFilePath; // 先保存路径
+
         try {
             mediaRecorder.stop();
             isRecording = false;
-            Log.d(TAG, "录音停止: " + currentFilePath);
-            if (callback != null) callback.onRecordingComplete(currentFilePath);
+            Log.d(TAG, "录音停止: " + filePath);
         } catch (IllegalStateException e) {
             Log.e(TAG, "录音停止异常", e);
             if (callback != null) callback.onError("录音停止异常: " + e.getMessage());
-        } finally {
             releaseRecorder();
+            return;
+        }
+
+        releaseRecorder();
+
+        // ⭐ 在 finally 外面调用回调
+        if (callback != null) {
+            Log.d(TAG, "调用 onRecordingComplete");
+            callback.onRecordingComplete(filePath);
         }
     }
 
@@ -128,5 +137,38 @@ public class AudioUtil {
     public void releaseAll() {
         releaseRecorder();
         releasePlayer();
+    }
+
+    /**
+     * 播放云端 URL 音频
+     */
+    public void playAudioUrl(String url, PlaybackCallback callback) {
+        if (mediaPlayer != null && mediaPlayer.isPlaying()) {
+            mediaPlayer.stop();
+            releasePlayer();
+        }
+
+        mediaPlayer = new MediaPlayer();
+        try {
+            mediaPlayer.setDataSource(url);
+            mediaPlayer.prepareAsync();
+            mediaPlayer.setOnPreparedListener(mp -> {
+                mp.start();
+                Log.d(TAG, "开始播放 URL: " + url);
+            });
+            mediaPlayer.setOnCompletionListener(mp -> {
+                releasePlayer();
+                if (callback != null) callback.onPlaybackComplete();
+            });
+            mediaPlayer.setOnErrorListener((mp, what, extra) -> {
+                releasePlayer();
+                if (callback != null) callback.onError("播放错误: " + what + ", " + extra);
+                return true;
+            });
+        } catch (IOException e) {
+            Log.e(TAG, "播放失败", e);
+            releasePlayer();
+            if (callback != null) callback.onError("播放失败: " + e.getMessage());
+        }
     }
 }

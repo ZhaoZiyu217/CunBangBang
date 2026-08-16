@@ -48,4 +48,9 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+
+    // HTTP 客户端（用于调用云开发 API）
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+// JSON 解析（用于处理 API 请求和响应）
+    implementation("com.google.code.gson:gson:2.10.1")
 }

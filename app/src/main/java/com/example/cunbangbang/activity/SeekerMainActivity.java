@@ -18,17 +18,20 @@ import com.example.cunbangbang.R;
 import com.example.cunbangbang.db.DBHelper;
 import com.example.cunbangbang.db.UserBean;
 import com.example.cunbangbang.util.AudioUtil;
+import com.example.cunbangbang.util.CloudManager;
 import com.example.cunbangbang.util.FileUtil;
 import com.example.cunbangbang.util.PermissionUtil;
+import com.google.gson.JsonObject;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 public class SeekerMainActivity extends AppCompatActivity {
 
     private static final String TAG = "SeekerMainActivity";
     private TextView tvGreeting;
     private View btnRecord;
-    private TextView tvHint;
     private Button btnLogout;
 
     private UserBean currentUser;
@@ -50,12 +53,13 @@ public class SeekerMainActivity extends AppCompatActivity {
         currentUser = (UserBean) getIntent().getSerializableExtra(AppConstant.EXTRA_USER);
         if (currentUser == null) {
             SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
-            int userId = prefs.getInt("user_id", -1);
-            if (userId != -1) {
+            String userId = prefs.getString("user_id", null);
+            if (userId != null) {
                 dbHelper = new DBHelper(this);
                 currentUser = dbHelper.getUserById(userId);
             }
             if (currentUser == null) {
+                Log.e(TAG, "无法获取用户信息，退出");
                 finish();
                 return;
             }
@@ -66,10 +70,10 @@ public class SeekerMainActivity extends AppCompatActivity {
 
         tvGreeting = findViewById(R.id.tv_greeting);
         btnRecord = findViewById(R.id.btn_record);
-        tvHint = findViewById(R.id.tv_hint);
         btnLogout = findViewById(R.id.btn_logout);
 
-        tvGreeting.setText("你好，" + currentUser.getName() + "  (" + currentUser.getVillage() + ")");
+        tvGreeting.setText(currentUser.getName() + "（" + currentUser.getVillage() + "）");
+        Log.d(TAG, "当前用户: " + currentUser);
 
         btnRecord.setOnTouchListener((v, event) -> {
             if (!PermissionUtil.hasPermissions(this)) {
@@ -78,12 +82,44 @@ public class SeekerMainActivity extends AppCompatActivity {
                 return true;
             }
 
+            TextView tvHoldSpeak = findViewById(R.id.tv_hold_speak);
+            TextView tvHint = findViewById(R.id.tv_hint_inner);
+
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
+                    // 按下：缩小到 90%
+                    v.animate().scaleX(0.90f).scaleY(0.90f).setDuration(100).start();
+                    if (tvHoldSpeak != null) {
+                        tvHoldSpeak.setText("录音中...");
+                        tvHoldSpeak.setTextSize(100);
+                    }
+                    if (tvHint != null) {
+                        tvHint.setText("松开发送");
+                    }
                     startRecording();
                     break;
                 case MotionEvent.ACTION_UP:
+                    // 松开：恢复 100%
+                    v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(100).start();
+                    if (tvHoldSpeak != null) {
+                        tvHoldSpeak.setText("按\n住\n说\n话");
+                        tvHoldSpeak.setTextSize(100);
+                    }
+                    if (tvHint != null) {
+                        tvHint.setText("松开发送求助");
+                    }
                     stopRecording();
+                    break;
+                case MotionEvent.ACTION_CANCEL:
+                    // 取消触摸：恢复
+                    v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(100).start();
+                    if (tvHoldSpeak != null) {
+                        tvHoldSpeak.setText("按\n住\n说\n话");
+                        tvHoldSpeak.setTextSize(100);
+                    }
+                    if (tvHint != null) {
+                        tvHint.setText("松开发送求助");
+                    }
                     break;
             }
             return true;
@@ -101,6 +137,7 @@ public class SeekerMainActivity extends AppCompatActivity {
         SharedPreferences.Editor editor = prefs.edit();
         editor.clear();
         editor.apply();
+        Log.d(TAG, "清除登录状态");
     }
 
     private void startRecording() {
@@ -112,69 +149,19 @@ public class SeekerMainActivity extends AppCompatActivity {
         String fileName = currentUser.getName() + "_" + System.currentTimeMillis() + ".aac";
         currentRecordingPath = new File(audioDir, fileName).getAbsolutePath();
 
-        Log.d(TAG, "========== 开始录音 ==========");
-        Log.d(TAG, "录音文件名: " + fileName);
-        Log.d(TAG, "录音路径: " + currentRecordingPath);
-
-        tvHint.setText("录音中... 松开发送");
-        btnRecord.setBackgroundResource(R.drawable.bg_circle_orange_pressed);
+        Log.d(TAG, "开始录音: " + currentRecordingPath);
 
         audioUtil.startRecording(currentRecordingPath, new AudioUtil.RecordingCallback() {
             @Override
             public void onRecordingComplete(String filePath) {
-                runOnUiThread(() -> {
-                    Log.d(TAG, "========== 录音完成 ==========");
-                    Log.d(TAG, "文件路径: " + filePath);
-
-                    // 检查文件是否存在
-                    File audioFile = new File(filePath);
-                    Log.d(TAG, "文件是否存在: " + audioFile.exists());
-                    Log.d(TAG, "文件大小: " + audioFile.length());
-
-                    // 提取文件名
-                    String fileNameOnly = new File(filePath).getName();
-                    Log.d(TAG, "文件名: " + fileNameOnly);
-
-                    // 插入数据库
-                    Log.d(TAG, "开始插入数据库...");
-                    Log.d(TAG, "  求助者姓名: " + currentUser.getName());
-                    Log.d(TAG, "  村落: " + currentUser.getVillage());
-                    Log.d(TAG, "  文件名: " + fileNameOnly);
-
-                    long result = dbHelper.insertHelpRecord(
-                            currentUser.getName(),
-                            currentUser.getVillage(),
-                            System.currentTimeMillis(),
-                            fileNameOnly,
-                            AppConstant.STATUS_PENDING
-                    );
-
-                    Log.d(TAG, "数据库插入结果: " + result);
-                    if (result == -1) {
-                        Log.e(TAG, "数据库插入失败！");
-                    } else {
-                        Log.d(TAG, "数据库插入成功，ID: " + result);
-                    }
-
-                    // 验证：查询所有记录
-                    java.util.List<com.example.cunbangbang.db.HelpRecordBean> records = dbHelper.getAllHelpRecords();
-                    Log.d(TAG, "当前数据库总记录数: " + records.size());
-                    for (int i = 0; i < records.size(); i++) {
-                        Log.d(TAG, "  记录 " + i + ": " + records.get(i).getFileName());
-                    }
-
-                    tvHint.setText("录音完成，已发送求助");
-                    btnRecord.setBackgroundResource(R.drawable.bg_circle_orange);
-                    Toast.makeText(SeekerMainActivity.this, "已发送求助", Toast.LENGTH_SHORT).show();
-                });
+                // 录音完成交给 stopRecording 处理，这里不做重复操作
+                Log.d(TAG, "录音完成，等待停止处理");
             }
 
             @Override
             public void onError(String error) {
                 runOnUiThread(() -> {
                     Log.e(TAG, "录音错误: " + error);
-                    tvHint.setText("松开发送求助");
-                    btnRecord.setBackgroundResource(R.drawable.bg_circle_orange);
                     Toast.makeText(SeekerMainActivity.this, "录音失败: " + error, Toast.LENGTH_SHORT).show();
                 });
             }
@@ -183,47 +170,72 @@ public class SeekerMainActivity extends AppCompatActivity {
 
     private void stopRecording() {
         if (audioUtil.isRecording()) {
-            // 传入回调，而不是 null
             audioUtil.stopRecording(new AudioUtil.RecordingCallback() {
                 @Override
                 public void onRecordingComplete(String filePath) {
                     runOnUiThread(() -> {
-                        Log.d(TAG, "========== 录音完成 ==========");
-                        Log.d(TAG, "文件路径: " + filePath);
-
-                        File audioFile = new File(filePath);
-                        Log.d(TAG, "文件是否存在: " + audioFile.exists());
-                        Log.d(TAG, "文件大小: " + audioFile.length());
-
+                        Log.d(TAG, "录音停止: " + filePath);
                         String fileNameOnly = new File(filePath).getName();
-                        Log.d(TAG, "文件名: " + fileNameOnly);
 
-                        Log.d(TAG, "开始插入数据库...");
-                        Log.d(TAG, "  求助者姓名: " + currentUser.getName());
-                        Log.d(TAG, "  村落: " + currentUser.getVillage());
-                        Log.d(TAG, "  文件名: " + fileNameOnly);
-
-                        long result = dbHelper.insertHelpRecord(
+                        // ==================== 第1步：存本地 ====================
+                        long localResult = dbHelper.insertHelpRecord(
                                 currentUser.getName(),
                                 currentUser.getVillage(),
                                 System.currentTimeMillis(),
                                 fileNameOnly,
                                 AppConstant.STATUS_PENDING
                         );
+                        Log.d(TAG, "本地插入结果: " + localResult);
 
-                        Log.d(TAG, "数据库插入结果: " + result);
-                        if (result == -1) {
-                            Log.e(TAG, "数据库插入失败！");
-                        } else {
-                            Log.d(TAG, "数据库插入成功，ID: " + result);
-                        }
+                        // ==================== 第2步：上传到云存储 ====================
+                        Log.d(TAG, "开始上传: " + fileNameOnly);
 
-                        java.util.List<com.example.cunbangbang.db.HelpRecordBean> records = dbHelper.getAllHelpRecords();
-                        Log.d(TAG, "当前数据库总记录数: " + records.size());
+                        CloudManager.getInstance().uploadFile(filePath, fileNameOnly,
+                                new CloudManager.CloudCallback<String>() {
+                                    @Override
+                                    public void onSuccess(String fileUrl) {
+                                        Log.d(TAG, "✅ 上传成功，URL: " + fileUrl);
 
-                        tvHint.setText("录音完成，已发送求助");
-                        btnRecord.setBackgroundResource(R.drawable.bg_circle_orange);
-                        Toast.makeText(SeekerMainActivity.this, "已发送求助", Toast.LENGTH_SHORT).show();
+                                        // ==================== 第3步：存云端数据库 ====================
+                                        Map<String, Object> helpData = new HashMap<>();
+                                        helpData.put("helperName", currentUser.getName());
+                                        helpData.put("helperVillage", currentUser.getVillage());
+                                        helpData.put("timestamp", System.currentTimeMillis());
+                                        helpData.put("fileName", fileNameOnly);
+                                        helpData.put("fileUrl", fileUrl);
+                                        helpData.put("status", AppConstant.STATUS_PENDING);
+
+                                        CloudManager.getInstance().add("help_records", helpData,
+                                                new CloudManager.CloudCallback<JsonObject>() {
+                                                    @Override
+                                                    public void onSuccess(JsonObject result) {
+                                                        Log.d(TAG, "✅ 云端记录保存成功");
+                                                        runOnUiThread(() -> {
+                                                            Toast.makeText(SeekerMainActivity.this,
+                                                                    "已发送求助", Toast.LENGTH_SHORT).show();
+                                                        });
+                                                    }
+
+                                                    @Override
+                                                    public void onFailure(String error) {
+                                                        Log.e(TAG, "❌ 云端记录保存失败: " + error);
+                                                        runOnUiThread(() -> {
+                                                            Toast.makeText(SeekerMainActivity.this,
+                                                                    "数据保存失败: " + error, Toast.LENGTH_SHORT).show();
+                                                        });
+                                                    }
+                                                });
+                                    }
+
+                                    @Override
+                                    public void onFailure(String error) {
+                                        Log.e(TAG, "❌ 上传失败: " + error);
+                                        runOnUiThread(() -> {
+                                            Toast.makeText(SeekerMainActivity.this,
+                                                    "上传失败，请检查网络", Toast.LENGTH_SHORT).show();
+                                        });
+                                    }
+                                });
                     });
                 }
 
@@ -231,20 +243,22 @@ public class SeekerMainActivity extends AppCompatActivity {
                 public void onError(String error) {
                     runOnUiThread(() -> {
                         Log.e(TAG, "录音停止错误: " + error);
-                        tvHint.setText("松开发送求助");
-                        btnRecord.setBackgroundResource(R.drawable.bg_circle_orange);
-                        Toast.makeText(SeekerMainActivity.this, "录音停止失败: " + error, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(SeekerMainActivity.this,
+                                "录音失败: " + error, Toast.LENGTH_SHORT).show();
                     });
                 }
             });
         }
-        tvHint.setText("松开发送求助");
-        btnRecord.setBackgroundResource(R.drawable.bg_circle_orange);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        audioUtil.releaseAll();
+        if (audioUtil != null) {
+            audioUtil.releaseAll();
+        }
     }
 }
+
+
+

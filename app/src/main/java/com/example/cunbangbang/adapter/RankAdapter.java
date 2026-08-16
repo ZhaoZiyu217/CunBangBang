@@ -36,7 +36,6 @@ public class RankAdapter extends RecyclerView.Adapter<RankAdapter.ViewHolder> {
         holder.tvRankName.setText(user.getName());
         holder.tvRankPoints.setText(user.getPoints() + "分");
 
-        // 前三名特殊样式
         if (position == 0) {
             holder.tvRankNumber.setTextColor(0xFFFFD700);
         } else if (position == 1) {

@@ -8,18 +8,10 @@ public class HelpRecordBean implements Serializable {
     private String helperVillage;
     private long timestamp;
     private String fileName;
+    private String fileUrl;
     private String status;
 
     public HelpRecordBean() {}
-
-    public HelpRecordBean(int id, String helperName, String helperVillage, long timestamp, String fileName, String status) {
-        this.id = id;
-        this.helperName = helperName;
-        this.helperVillage = helperVillage;
-        this.timestamp = timestamp;
-        this.fileName = fileName;
-        this.status = status;
-    }
 
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
@@ -35,6 +27,9 @@ public class HelpRecordBean implements Serializable {
 
     public String getFileName() { return fileName; }
     public void setFileName(String fileName) { this.fileName = fileName; }
+
+    public String getFileUrl() { return fileUrl; }
+    public void setFileUrl(String fileUrl) { this.fileUrl = fileUrl; }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }

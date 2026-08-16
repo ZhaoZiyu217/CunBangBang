@@ -5,6 +5,7 @@
     <color name="black">#000000</color>
     <color name="gray_light">#F5F5F5</color>
     <color name="gray_text">#666666</color>
-    <color name="nav_item_selected">#FF8C42</color>
-    <color name="nav_item_unselected">#999999</color>
+    <color name="nav_selected">#FF8C42</color>
+    <color name="nav_unselected">#555555</color>
+    <color name="bottom_nav_text">#FF8C42</color>
 </resources>

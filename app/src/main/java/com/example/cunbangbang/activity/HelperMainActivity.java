@@ -40,16 +40,19 @@ public class HelperMainActivity extends AppCompatActivity {
         currentUser = (UserBean) getIntent().getSerializableExtra(AppConstant.EXTRA_USER);
         if (currentUser == null) {
             SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
-            int userId = prefs.getInt("user_id", -1);
-            if (userId != -1) {
+            String userId = prefs.getString("user_id", null);
+            if (userId != null) {
                 DBHelper dbHelper = new DBHelper(this);
                 currentUser = dbHelper.getUserById(userId);
             }
             if (currentUser == null) {
+                Log.e(TAG, "无法获取用户信息，退出");
                 finish();
                 return;
             }
         }
+
+        Log.d(TAG, "当前用户: " + currentUser.getName());
 
         bottomNav = findViewById(R.id.bottom_navigation);
 
@@ -82,29 +85,22 @@ public class HelperMainActivity extends AppCompatActivity {
         });
     }
 
-
-    /**
-     * 刷新个人主页数据
-     */
     public void refreshProfile() {
         Log.d(TAG, "refreshProfile: 刷新个人主页");
-
-        // 重新查询最新数据
         DBHelper dbHelper = new DBHelper(this);
         UserBean latestUser = dbHelper.getUserById(currentUser.getId());
         if (latestUser != null) {
             currentUser = latestUser;
-            Log.d(TAG, "refreshProfile: 最新积分 = " + currentUser.getPoints());
+            Log.d(TAG, "刷新后积分: " + currentUser.getPoints());
         }
-        // 直接重新创建 ProfileFragment 并替换
+
         ProfileFragment newProfile = ProfileFragment.newInstance(currentUser);
         getSupportFragmentManager().beginTransaction()
                 .replace(R.id.fragment_container, newProfile)
                 .commit();
 
         profileFragment = newProfile;
-
-
+        bottomNav.setSelectedItemId(R.id.nav_profile);
     }
 
     public void clearLoginState() {
@@ -112,6 +108,7 @@ public class HelperMainActivity extends AppCompatActivity {
         SharedPreferences.Editor editor = prefs.edit();
         editor.clear();
         editor.apply();
+        Log.d(TAG, "清除登录状态");
         finish();
     }
 }

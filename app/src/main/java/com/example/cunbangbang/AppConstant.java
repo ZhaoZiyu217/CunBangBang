@@ -2,7 +2,7 @@ package com.example.cunbangbang;
 
 public class AppConstant {
     public static final String DB_NAME = "CunBangBang.db";
-    public static final int DB_VERSION = 1;
+    public static final int DB_VERSION = 3;  // ⭐ 升级版本号
 
     public static final String USER_TABLE = "UserTable";
     public static final String HELP_TABLE = "HelpTable";

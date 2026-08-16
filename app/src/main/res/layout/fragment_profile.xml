@@ -2,37 +2,53 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="@dimen/padding_normal">
+    android:padding="@dimen/padding_normal"
+    android:fitsSystemWindows="true"
+    android:background="#FFFFFF">
 
-    <!-- 用户信息区域 -->
+    <!-- 姓名和村落并排放 -->
     <LinearLayout
         android:id="@+id/layout_user_info"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="horizontal"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="16dp">
 
         <TextView
             android:id="@+id/tv_profile_name"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:textSize="@dimen/text_body"
-            android:layout_marginBottom="@dimen/padding_tiny" />
+            android:layout_weight="1"
+            android:text="姓名：张大爷"
+            android:textSize="24sp"
+            android:textColor="#000000"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/tv_profile_village"
-            android:layout_width="match_parent"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:textSize="@dimen/text_small"
-            android:textColor="#666666"
-            android:layout_marginBottom="@dimen/padding_normal" />
+            android:layout_weight="1"
+            android:text="村落：张庄村"
+            android:textSize="24sp"
+            android:textColor="#000000"
+            android:textStyle="bold"
+            android:gravity="end" />
 
-        <TextView
-            android:id="@+id/tv_profile_points"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="@dimen/text_body"
-            android:layout_marginBottom="@dimen/padding_medium" />
     </LinearLayout>
+
+    <!-- 积分 -->
+    <TextView
+        android:id="@+id/tv_profile_points"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="当前积分：0"
+        android:textSize="22sp"
+        android:textColor="#000000"
+        android:textStyle="bold"
+        android:layout_below="@id/layout_user_info"
+        android:layout_marginBottom="20dp" />
 
     <!-- 排行榜标题 -->
     <TextView
@@ -40,9 +56,11 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="同村排行榜"
-        android:textSize="@dimen/text_greeting"
+        android:textSize="22sp"
+        android:textColor="#000000"
         android:textStyle="bold"
-        android:layout_below="@id/layout_user_info" />
+        android:layout_below="@id/tv_profile_points"
+        android:layout_marginBottom="12dp" />
 
     <!-- 退出登录按钮：固定底部 -->
     <Button
@@ -50,19 +68,20 @@
         android:layout_width="match_parent"
         android:layout_height="@dimen/logout_btn_height"
         android:text="退出登录"
-        android:textSize="@dimen/text_body"
-        android:textColor="#FF8C42"
+        android:textSize="20sp"
+        android:textColor="#000000"
         android:background="@android:drawable/editbox_background"
-        android:layout_alignParentBottom="true" />
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="@dimen/padding_small" />
 
-    <!-- 排行榜列表：填满中间剩余空间 -->
+    <!-- 排行榜列表 -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rv_rank"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_above="@id/btn_profile_logout"
         android:layout_below="@id/tv_rank_title"
-        android:layout_marginTop="@dimen/padding_small"
-        android:layout_marginBottom="@dimen/padding_small" />
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="12dp" />
 
 </RelativeLayout>
