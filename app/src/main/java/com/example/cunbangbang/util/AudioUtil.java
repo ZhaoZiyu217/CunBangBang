@@ -2,6 +2,7 @@ package com.example.cunbangbang.util;
 
 import android.media.MediaPlayer;
 import android.media.MediaRecorder;
+import android.os.Build;
 import android.util.Log;
 
 import java.io.IOException;
@@ -15,11 +16,13 @@ public class AudioUtil {
 
     public interface RecordingCallback {
         void onRecordingComplete(String filePath);
+
         void onError(String error);
     }
 
     public interface PlaybackCallback {
         void onPlaybackComplete();
+
         void onError(String error);
     }
 
@@ -33,7 +36,9 @@ public class AudioUtil {
         mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         mediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
         mediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
-        mediaRecorder.setAudioSamplingRate(44100);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.FROYO) {
+            mediaRecorder.setAudioSamplingRate(44100);
+        }
         mediaRecorder.setOutputFile(filePath);
 
         try {
@@ -55,18 +60,28 @@ public class AudioUtil {
             return;
         }
 
-        String filePath = currentFilePath; // 先保存路径
+        String filePath = currentFilePath;
 
         try {
             mediaRecorder.stop();
             isRecording = false;
             Log.d(TAG, "录音停止: " + filePath);
-        } catch (IllegalStateException e) {
-            Log.e(TAG, "录音停止异常", e);
-            if (callback != null) callback.onError("录音停止异常: " + e.getMessage());
+        } catch (RuntimeException e) {
+            // ⭐ 录音太短，stop 会抛异常
+            Log.e(TAG, "录音停止异常（可能太短）: " + e.getMessage());
+            isRecording = false;
             releaseRecorder();
+            if (callback != null) callback.onError("录音太短");
             return;
         }
+
+        releaseRecorder();
+
+        if (callback != null) {
+            Log.d(TAG, "调用 onRecordingComplete");
+            callback.onRecordingComplete(filePath);
+        }
+
 
         releaseRecorder();
 
@@ -170,5 +185,29 @@ public class AudioUtil {
             releasePlayer();
             if (callback != null) callback.onError("播放失败: " + e.getMessage());
         }
+    }
+
+
+    /**
+     * 获取音频文件时长（毫秒）
+     */
+    public long getAudioDuration(String filePath) {
+        android.media.MediaMetadataRetriever retriever = new android.media.MediaMetadataRetriever();
+        try {
+            retriever.setDataSource(filePath);
+            String durationStr = retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_DURATION);
+            if (durationStr != null) {
+                return Long.parseLong(durationStr);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "获取音频时长失败: " + e.getMessage());
+        } finally {
+            try {
+                retriever.release();
+            } catch (Exception e) {
+                // ignore
+            }
+        }
+        return 0;
     }
 }

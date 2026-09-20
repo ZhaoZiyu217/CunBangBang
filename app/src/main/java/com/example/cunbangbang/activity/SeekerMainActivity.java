@@ -3,6 +3,7 @@ package com.example.cunbangbang.activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MotionEvent;
@@ -10,6 +11,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.app.AlertDialog;
 
 import androidx.appcompat.app.AppCompatActivity;
 
@@ -100,7 +102,11 @@ public class SeekerMainActivity extends AppCompatActivity {
             switch (event.getAction()) {
                 case MotionEvent.ACTION_DOWN:
                     // 按下：缩小到 90%
-                    v.animate().scaleX(0.90f).scaleY(0.90f).setDuration(100).start();
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+                            v.animate().scaleX(0.90f).scaleY(0.90f).setDuration(100).start();
+                        }
+                    }
                     if (tvHoldSpeak != null) {
                         tvHoldSpeak.setText("录音中...");
                         tvHoldSpeak.setTextSize(100);
@@ -112,7 +118,11 @@ public class SeekerMainActivity extends AppCompatActivity {
                     break;
                 case MotionEvent.ACTION_UP:
                     // 松开：恢复 100%
-                    v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(100).start();
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+                            v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(100).start();
+                        }
+                    }
                     if (tvHoldSpeak != null) {
                         tvHoldSpeak.setText("按\n住\n说\n话");
                         tvHoldSpeak.setTextSize(100);
@@ -124,7 +134,11 @@ public class SeekerMainActivity extends AppCompatActivity {
                     break;
                 case MotionEvent.ACTION_CANCEL:
                     // 取消触摸：恢复
-                    v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(100).start();
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH) {
+                            v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(100).start();
+                        }
+                    }
                     if (tvHoldSpeak != null) {
                         tvHoldSpeak.setText("按\n住\n说\n话");
                         tvHoldSpeak.setTextSize(100);
@@ -149,7 +163,9 @@ public class SeekerMainActivity extends AppCompatActivity {
         SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
         editor.clear();
-        editor.apply();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+            editor.apply();
+        }
         Log.d(TAG, "清除登录状态");
     }
 
@@ -190,6 +206,27 @@ public class SeekerMainActivity extends AppCompatActivity {
                         Log.d(TAG, "录音停止: " + filePath);
                         String fileNameOnly = new File(filePath).getName();
 
+                        // ⭐ 判断录音时长
+                        long duration = 0;
+                        try {
+                            duration = audioUtil.getAudioDuration(filePath);
+                        } catch (Exception e) {
+                            Log.e(TAG, "获取时长异常", e);
+                        }
+                        Log.d(TAG, "录音时长: " + duration + "ms");
+                        if (duration < 1000) {
+                            Log.d(TAG, "录音太短，不发送");
+
+                            // ⭐ 使用自定义布局
+                            android.view.View dialogView = getLayoutInflater().inflate(R.layout.dialog_too_short, null);
+
+                            new AlertDialog.Builder(SeekerMainActivity.this)
+                                    .setView(dialogView)
+                                    .setPositiveButton("重新录制", null)
+                                    .show();
+                            return;
+                        }
+
                         // ==================== 第1步：存本地 ====================
                         long localResult = dbHelper.insertHelpRecord(
                                 currentUser.getName(),
@@ -224,8 +261,11 @@ public class SeekerMainActivity extends AppCompatActivity {
                                                     public void onSuccess(JsonObject result) {
                                                         Log.d(TAG, "✅ 云端记录保存成功");
                                                         runOnUiThread(() -> {
-                                                            Toast.makeText(SeekerMainActivity.this,
-                                                                    "已发送求助", Toast.LENGTH_SHORT).show();
+                                                            // ⭐ 成功提示改大
+                                                            Toast toast = Toast.makeText(SeekerMainActivity.this,
+                                                                    "已发送求助", Toast.LENGTH_LONG);
+                                                            toast.setGravity(android.view.Gravity.CENTER, 0, 0);
+                                                            toast.show();
                                                         });
                                                     }
 
@@ -256,22 +296,38 @@ public class SeekerMainActivity extends AppCompatActivity {
                 public void onError(String error) {
                     runOnUiThread(() -> {
                         Log.e(TAG, "录音停止错误: " + error);
-                        Toast.makeText(SeekerMainActivity.this,
-                                "录音失败: " + error, Toast.LENGTH_SHORT).show();
+                        if (error.contains("太短")) {
+                            // ⭐ 使用自定义 Dialog
+                            android.app.Dialog dialog = new android.app.Dialog(SeekerMainActivity.this);
+                            dialog.setContentView(R.layout.dialog_too_short);
+                            dialog.setCancelable(false);
+
+                            if (dialog.getWindow() != null) {
+                                dialog.getWindow().setLayout(
+                                        (int) (getResources().getDisplayMetrics().widthPixels * 0.85),
+                                        android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+                                );
+                            }
+
+                            Button btnRetry = dialog.findViewById(R.id.btn_retry);
+                            btnRetry.setOnClickListener(v -> dialog.dismiss());
+
+                            dialog.show();
+                        } else {
+                            Toast.makeText(SeekerMainActivity.this,
+                                    "录音失败: " + error, Toast.LENGTH_SHORT).show();
+                        }
                     });
                 }
-            });
-        }
-    }
+            });  // ← 结束 stopRecording 调用
+        }        // ← 结束 if (audioUtil.isRecording())
+    }            // ← 结束 stopRecording 方法
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
+        super.onDestroy();   // ← 修正：不是 notify()
         if (audioUtil != null) {
             audioUtil.releaseAll();
         }
     }
 }
-
-
-
