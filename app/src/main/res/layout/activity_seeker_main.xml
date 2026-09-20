@@ -25,24 +25,26 @@
             android:textColor="#333333"
             android:layout_centerVertical="true" />
 
-        <Button
-            android:id="@+id/btn_logout"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="退出"
-            android:textSize="12sp"
-            android:textColor="#999999"
-            android:background="@android:drawable/editbox_background"
-            android:paddingLeft="8dp"
-            android:paddingRight="8dp"
-            android:paddingTop="4dp"
-            android:paddingBottom="4dp"
-            android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true" />
+    <!-- ⭐ 暂时隐藏退出登录按钮
+    <Button
+        android:id="@+id/btn_logout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="退出"
+        android:textSize="12sp"
+        android:textColor="#999999"
+        android:background="@android:drawable/editbox_background"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp"
+        android:layout_alignParentEnd="true"
+        android:layout_centerVertical="true" />
+        -->
 
-    </RelativeLayout>
+</RelativeLayout>
 
-    <!-- 录音按钮：占满剩余空间 -->
+<!-- 录音按钮：占满剩余空间 -->
     <RelativeLayout
         android:id="@+id/btn_record"
         android:layout_width="match_parent"

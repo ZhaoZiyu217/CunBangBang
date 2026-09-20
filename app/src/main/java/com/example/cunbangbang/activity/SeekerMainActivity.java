@@ -52,12 +52,24 @@ public class SeekerMainActivity extends AppCompatActivity {
 
         currentUser = (UserBean) getIntent().getSerializableExtra(AppConstant.EXTRA_USER);
         if (currentUser == null) {
+            // ⭐ 直接从 SharedPreferences 恢复
             SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
             String userId = prefs.getString("user_id", null);
-            if (userId != null) {
-                dbHelper = new DBHelper(this);
-                currentUser = dbHelper.getUserById(userId);
+            String userName = prefs.getString("user_name", null);
+            String userVillage = prefs.getString("user_village", null);
+            String userRole = prefs.getString("user_role", null);
+            int userPoints = prefs.getInt("user_points", 0);
+
+            if (userId != null && userName != null) {
+                currentUser = new UserBean();
+                currentUser.setId(userId);
+                currentUser.setName(userName);
+                currentUser.setVillage(userVillage);
+                currentUser.setRole(userRole);
+                currentUser.setPoints(userPoints);
+                Log.d(TAG, "从 SharedPreferences 恢复用户: " + userName);
             }
+
             if (currentUser == null) {
                 Log.e(TAG, "无法获取用户信息，退出");
                 finish();
@@ -70,7 +82,7 @@ public class SeekerMainActivity extends AppCompatActivity {
 
         tvGreeting = findViewById(R.id.tv_greeting);
         btnRecord = findViewById(R.id.btn_record);
-        btnLogout = findViewById(R.id.btn_logout);
+       // btnLogout = findViewById(R.id.btn_logout);
 
         tvGreeting.setText(currentUser.getName() + "（" + currentUser.getVillage() + "）");
         Log.d(TAG, "当前用户: " + currentUser);
@@ -125,11 +137,12 @@ public class SeekerMainActivity extends AppCompatActivity {
             return true;
         });
 
-        btnLogout.setOnClickListener(v -> {
-            clearLoginState();
-            audioUtil.releaseAll();
-            finish();
-        });
+        // ⭐ 暂时隐藏退出登录按钮
+      //  btnLogout.setOnClickListener(v -> {
+        //    clearLoginState();
+        //    audioUtil.releaseAll();
+        //    finish();
+      //  });
     }
 
     private void clearLoginState() {

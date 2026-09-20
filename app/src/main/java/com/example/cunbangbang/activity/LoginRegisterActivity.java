@@ -46,12 +46,17 @@ public class LoginRegisterActivity extends AppCompatActivity {
         // 检查是否已登录
         SharedPreferences prefs = getSharedPreferences("user_prefs", MODE_PRIVATE);
         String userId = prefs.getString("user_id", null);
-        if (userId != null) {
-            UserBean savedUser = dbHelper.getUserById(userId);
-            if (savedUser != null) {
-                navigateToMain(savedUser);
-                return;
-            }
+        String userName = prefs.getString("user_name", null);
+        if (userId != null && userName != null) {
+            // ⭐ 直接从 SharedPreferences 构造 UserBean
+            UserBean savedUser = new UserBean();
+            savedUser.setId(userId);
+            savedUser.setName(userName);
+            savedUser.setVillage(prefs.getString("user_village", ""));
+            savedUser.setRole(prefs.getString("user_role", ""));
+            savedUser.setPoints(prefs.getInt("user_points", 0));
+            navigateToMain(savedUser);
+            return;
         }
 
         etName = findViewById(R.id.et_name);
@@ -59,7 +64,7 @@ public class LoginRegisterActivity extends AppCompatActivity {
         rgRole = findViewById(R.id.rg_role);
         btnEnter = findViewById(R.id.btn_enter);
 
-        String[] villages = {"张庄村", "李庄村", "王庄村"};
+        String[] villages = {"三门峡市康养中心", "李庄村", "王庄村"};
         ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, villages);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerVillage.setAdapter(adapter);

@@ -62,13 +62,24 @@ public class AudioListAdapter extends RecyclerView.Adapter<AudioListAdapter.View
         return new ViewHolder(view);
     }
 
+    /**
+     * 将时间戳格式化为 年月日 时分
+     */
+    private String formatTime(long timestamp) {
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy年MM月dd日 HH:mm", java.util.Locale.getDefault());
+        return sdf.format(new java.util.Date(timestamp));
+    }
+
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, @SuppressLint("RecyclerView") int position) {
         HelpRecordBean record = records.get(position);
         String name = FileUtil.extractNameFromFileName(record.getFileName());
 
         holder.tvName.setText(name);
-        holder.tvStatus.setText(record.getStatus());
+        //holder.tvStatus.setText(record.getStatus());
+        // ⭐ 显示时间（替代原来的状态）
+        String timeText = formatTime(record.getTimestamp());
+        holder.tvStatus.setText(timeText);
 
         if (AppConstant.STATUS_HELPED.equals(record.getStatus())) {
             holder.btnHelp.setEnabled(false);
